@@ -1,6 +1,8 @@
 import { 
   Navbar, NavbarBrand, NavbarContent, NavbarItem, NavbarMenuToggle, 
-  NavbarMenu, NavbarMenuItem, Link, Button 
+  NavbarMenu, NavbarMenuItem, Link, Button,
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  useDisclosure
 } from "@heroui/react";
 import { useState } from "react";
 import { NavLink } from "react-router-dom";
@@ -14,12 +16,18 @@ export const FLogo = () => (
 
 export default function MainNavbar({ onLogout }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isOpen, onOpen, onOpenChange } = useDisclosure();
 
   // Helper function para sa styling ng active links
   const getLinkStyle = ({ isActive }) => ({
     color: isActive ? "#0070f3" : "#11181C", // Blue kung active, default color kung hindi
     fontWeight: isActive ? "bold" : "normal",
   });
+
+  const handleLogoutClick = () => {
+    onLogout();
+    onOpenChange(false);
+  };
 
   return (
     <Navbar isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen} isBordered className="bg-white">
@@ -47,7 +55,7 @@ export default function MainNavbar({ onLogout }) {
 
       <NavbarContent justify="end">
         <NavbarItem>
-          <Button color="danger" variant="flat" radius="full" size="sm" className="font-semibold" onPress={onLogout}>
+          <Button color="danger" variant="flat" radius="full" size="sm" className="font-semibold" onPress={onOpen}>
             Logout
           </Button>
         </NavbarItem>
@@ -64,12 +72,31 @@ export default function MainNavbar({ onLogout }) {
             Information
           </Link>
         </NavbarMenuItem>
-        <NavbarMenuItem>
-          <Link className="w-full" color="danger" href="#" size="lg" onClick={onLogout}>
-            Log Out
-          </Link>
-        </NavbarMenuItem>
       </NavbarMenu>
+
+      {/* Logout Confirmation Modal */}
+      <Modal isOpen={isOpen} onOpenChange={onOpenChange}>
+        <ModalContent>
+          {(onClose) => (
+            <>
+              <ModalHeader className="flex flex-col gap-1">Logout</ModalHeader>
+              <ModalBody>
+                <p>
+                  Are you sure you want to logout?
+                </p>
+              </ModalBody>
+              <ModalFooter>
+                <Button color="default" variant="light" onPress={onClose}>
+                  Cancel
+                </Button>
+                <Button color="danger" onPress={handleLogoutClick}>
+                  Logout
+                </Button>
+              </ModalFooter>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </Navbar>
   );
 }
