@@ -3,6 +3,7 @@ import {
   NavbarMenu, NavbarMenuItem, Link, Button 
 } from "@heroui/react";
 import { useState } from "react";
+import { NavLink } from "react-router-dom";
 
 // Logo inside the same file for convenience
 export const FLogo = () => (
@@ -13,6 +14,12 @@ export const FLogo = () => (
 
 export default function MainNavbar({ onLogout }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Helper function para sa styling ng active links
+  const getLinkStyle = ({ isActive }) => ({
+    color: isActive ? "#0070f3" : "#11181C", // Blue kung active, default color kung hindi
+    fontWeight: isActive ? "bold" : "normal",
+  });
 
   return (
     <Navbar isMenuOpen={isMenuOpen} onMenuOpenChange={setIsMenuOpen} isBordered className="bg-white">
@@ -25,9 +32,17 @@ export default function MainNavbar({ onLogout }) {
       </NavbarContent>
 
       <NavbarContent className="hidden sm:flex gap-8" justify="center">
-        <NavbarItem><Link color="foreground" href="#">Dashboard</Link></NavbarItem>
-        <NavbarItem isActive><Link href="#" aria-current="page">Leave Credits</Link></NavbarItem>
-        <NavbarItem><Link color="foreground" href="#">Information</Link></NavbarItem>
+        <NavbarItem>
+          {/* Ginagamit natin ang as={NavLink} para hindi mag-refresh ang page */}
+          <Link as={NavLink} to="/" style={getLinkStyle}>
+            Home
+          </Link>
+        </NavbarItem>
+        <NavbarItem>
+          <Link as={NavLink} to="/information" style={getLinkStyle}>
+            Information
+          </Link>
+        </NavbarItem>
       </NavbarContent>
 
       <NavbarContent justify="end">
@@ -39,8 +54,16 @@ export default function MainNavbar({ onLogout }) {
       </NavbarContent>
 
       <NavbarMenu>
-        <NavbarMenuItem><Link className="w-full" href="#" size="lg">Dashboard</Link></NavbarMenuItem>
-        <NavbarMenuItem><Link className="w-full" href="#" size="lg">Information</Link></NavbarMenuItem>
+        <NavbarMenuItem>
+          <Link as={NavLink} to="/" className="w-full" size="lg" onClick={() => setIsMenuOpen(false)}>
+            Home
+          </Link>
+        </NavbarMenuItem>
+        <NavbarMenuItem>
+          <Link as={NavLink} to="/information" className="w-full" size="lg" onClick={() => setIsMenuOpen(false)}>
+            Information
+          </Link>
+        </NavbarMenuItem>
         <NavbarMenuItem>
           <Link className="w-full" color="danger" href="#" size="lg" onClick={onLogout}>
             Log Out
