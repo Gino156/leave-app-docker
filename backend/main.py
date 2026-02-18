@@ -221,7 +221,8 @@ async def get_user_profile(
         }
     }
 
-app.post("/LeaveHistory/Cancel/{leave_id}")
+# Ensure this is NOT indented inside another function
+@app.post("/LeaveHistory/Cancel/{leave_id}")
 async def cancel_leave_request(
     leave_id: int,
     current_user: Annotated[models.UserTable, Depends(get_current_user)],
@@ -235,6 +236,7 @@ async def cancel_leave_request(
     if not leave_request:
         raise HTTPException(status_code=404, detail="Leave request not found")
     
+    # Only allow cancellation if still pending
     if leave_request.ApprovalStatus != "Pending":
         raise HTTPException(status_code=400, detail="Only pending requests can be cancelled")
 

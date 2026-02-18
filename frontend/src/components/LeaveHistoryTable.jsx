@@ -1,18 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { 
   Card, CardHeader, CardBody, Divider, Table, TableHeader, 
   TableColumn, TableBody, TableRow, TableCell, Chip, Skeleton, Button
 } from "@heroui/react";
 
-const LeaveHistoryTable = ({ data, loading }) => {
-  // 1. Manage selection state (optional, if you need to access the selected ID)
-  const [selectedKeys, setSelectedKeys] = React.useState(new Set([]));
+const LeaveHistoryTable = ({ data, loading, onCancelSuccess }) => {
+  // Manage selection state for the "Success" highlight
+  const [selectedKeys, setSelectedKeys] = useState(new Set([]));
+  // Track which specific row is currently being cancelled for the loading spinner
+  const [isActionLoading, setIsActionLoading] = useState(null);
 
   const getStatusColor = (status) => {
     switch (status?.toLowerCase()) {
       case 'approved': return 'success';
       case 'pending': return 'warning';
       case 'rejected': return 'danger';
+      case 'cancelled': return 'default';
       default: return 'default';
     }
   };
@@ -22,6 +25,37 @@ const LeaveHistoryTable = ({ data, loading }) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'short', day: '2-digit', year: '2-digit'
     });
+  };
+
+  const handleCancel = async (leaveId) => {
+    const myToken = localStorage.getItem("access_token");
+    
+    // Safety check before proceeding
+    if (!window.confirm(`Are you sure you want to cancel request #${leaveId}?`)) return;
+
+    setIsActionLoading(leaveId);
+    try {
+      const response = await fetch(`http://172.96.10.161:8000/LeaveHistory/Cancel/${leaveId}`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${myToken}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Triggers fetchData() in App.js to refresh Leave Credits and Table data
+        onCancelSuccess(); 
+      } else {
+        const errorData = await response.json();
+        alert(errorData.detail || "Failed to cancel request.");
+      }
+    } catch (error) {
+      console.error("Cancel Error:", error);
+      alert("An error occurred. Please check your connection.");
+    } finally {
+      setIsActionLoading(null);
+    }
   };
 
   return (
@@ -44,12 +78,11 @@ const LeaveHistoryTable = ({ data, loading }) => {
           removeWrapper 
           shadow="none" 
           className="min-w-full"
-          // --- SELECTION PROPS ADDED HERE ---
+          // Selection Configuration
           selectionMode="single"
           color="success"
           selectedKeys={selectedKeys}
           onSelectionChange={setSelectedKeys}
-          // ----------------------------------
         >
           <TableHeader>
             <TableColumn className="bg-gray-50/80 text-gray-400 text-[10px] py-3 uppercase">ID</TableColumn>
@@ -76,7 +109,10 @@ const LeaveHistoryTable = ({ data, loading }) => {
               ))
             ) : (
               data.map((item) => (
-                <TableRow key={item.LeaveApplicationId} className="cursor-pointer transition-colors border-b border-gray-100 last:border-none">
+                <TableRow 
+                  key={item.LeaveApplicationId} 
+                  className="cursor-pointer transition-colors border-b border-gray-100 last:border-none"
+                >
                   <TableCell className="text-[11px] font-bold text-slate-500">{item.LeaveApplicationId}</TableCell>
                   <TableCell className="text-[11px] font-medium text-slate-600">{formatDate(item.DateCreated)}</TableCell>
                   <TableCell className="text-[11px] text-slate-600">{formatDate(item.BeginDate)}</TableCell>
@@ -96,14 +132,19 @@ const LeaveHistoryTable = ({ data, loading }) => {
                       {item.ApprovalStatus || "Pending"}
                     </Chip>
                   </TableCell>
-                  <TableCell className="text-[10px] text-slate-400 font-medium">
+                  <TableCell>
                     <Button 
                       color="danger" 
-                      variant="shadow" 
+                      variant="flat" 
+                      size="sm"
                       radius="full" 
-                      className="text-white font-bold w-full sm:w-auto bg-red-400 h-9 px-5"
-                      onPress={() => alert(`Cancel request ID: ${item.LeaveApplicationId}`)}
-                      >
+                      className="font-bold h-8 text-[10px]"
+                      // Only allow cancellation for "Pending" requests
+                      isDisabled={item.ApprovalStatus !== "Pending"}
+                      // Show loading state for the specific row being processed
+                      isLoading={isActionLoading === item.LeaveApplicationId}
+                      onPress={() => handleCancel(item.LeaveApplicationId)}
+                    >
                       Cancel
                     </Button>
                   </TableCell>
