@@ -187,7 +187,7 @@ function App() {
           </Card>
 
           <div className="xl:col-span-3">
-            <LeaveHistoryTable data={leaveHistory} loading={loading} />
+            <LeaveHistoryTable data={leaveHistory} loading={loading} onCancelSuccess={fetchData} />
           </div>
           
         </div>
