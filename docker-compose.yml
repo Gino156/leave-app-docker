@@ -13,6 +13,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d auth_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # Backend: FastAPI
   api:
@@ -21,21 +26,20 @@ services:
     ports:
       - "8000:8000"
     depends_on:
-      - auth-db
+      auth-db:
+        condition: service_healthy # Dito hihintayin niyang mag-pass ang healthcheck sa itaas
     environment:
-      # --- PostgreSQL Config (Auth) ---
       - PG_USER=postgres
       - PG_PASS=dC_it@gn25?
       - PG_HOST=auth-db
       - PG_PORT=5432
       - PG_DB=auth_db
-      
-      # --- SQL Server Config (Payroll) ---
       - SQL_USER=sa
       - SQL_PASS=Ftp@2024?
       - SQL_HOST=172.96.10.78 
       - SQL_PORT=1433
       - SQL_DB=PayrollDB
+    restart: on-failure 
 
   # Frontend: Vite
   web:
