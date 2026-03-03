@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
 import { 
   Card, CardBody, Divider, Button, Chip, Spinner,
-  User, Skeleton, useDisclosure, CardHeader
+  User, Skeleton, useDisclosure, CardHeader,
+  Modal, ModalContent, ModalHeader, ModalBody, ModalFooter,
+  Avatar
 } from "@heroui/react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
@@ -22,7 +24,7 @@ export const PlusIcon = ({ fill = "currentColor", size = 24 }) => (
 // --- DASHBOARD VIEW COMPONENT ---
 // Hiwalay na component para sa main content para malinis ang Routing sa App()
 const DashboardView = ({ 
-  userProfile, loading, onOpen, apiData, fetchData, leaveHistory 
+  userProfile, loading, onOpen, apiData, fetchData, leaveHistory, onOpenUserProfile 
 }) => {
   const stats = [
     { label: "Ending balance", value: userProfile?.credits?.ending_balance ?? "0", color: "text-black" },
@@ -35,17 +37,19 @@ const DashboardView = ({
     <main className="max-w-6xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 flex flex-col gap-6 sm:gap-8">
       {/* PROFILE SECTION */}
       <section className="flex flex-col sm:flex-row justify-between items-center bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-gray-100 gap-4">
-        <User
-          avatarProps={{ 
-            showFallback: true, 
-            size: "lg", 
-            isBordered: true,
-            className: "border-green-600 border-2 bg-white text-slate-400" 
-          }}
-          description={loading ? <Skeleton className="h-3 w-24 rounded-lg mt-1" /> : `Employee ID: ${userProfile?.EmployeeId || userProfile?.id || "N/A"}`}
-          name={loading ? <Skeleton className="h-4 w-32 rounded-lg" /> : (userProfile?.full_name || "User")}
-          className="transition-transform hover:scale-105 uppercase font-bold"
-        />
+        <div onClick={onOpenUserProfile} className="cursor-pointer">
+          <User
+            avatarProps={{ 
+              showFallback: true, 
+              size: "lg", 
+              isBordered: true,
+              className: "border-green-600 border-2 bg-white text-slate-400" 
+            }}
+            description={loading ? <Skeleton className="h-3 w-24 rounded-lg mt-1" /> : `Employee ID: ${userProfile?.EmployeeId || userProfile?.id || "N/A"}`}
+            name={loading ? <Skeleton className="h-4 w-32 rounded-lg" /> : (userProfile?.full_name || "User")}
+            className="transition-transform hover:scale-105 uppercase font-bold"
+          />
+        </div>
         <Button 
           color="success" 
           variant="shadow" 
@@ -77,7 +81,7 @@ const DashboardView = ({
           <CardHeader className="flex flex-col items-start px-6 pt-6 pb-2">
             <p className="text-tiny uppercase font-bold text-primary tracking-wider">Live Connection</p>
             <h2 className="text-xl font-bold">FastAPI Status</h2>
-          </CardHeader>
+           </CardHeader>
           <Divider className="opacity-50" />
           <CardBody className="py-12 flex flex-col items-center justify-center">
             {loading ? <Spinner color="primary" /> : (
@@ -112,6 +116,7 @@ function App() {
   const [apiData, setApiData] = useState("Loading...");
   const [loading, setLoading] = useState(true);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isUserProfileOpen, onOpen: onOpenUserProfile, onClose: onCloseUserProfile } = useDisclosure();
 
   const fetchData = async () => {
     if (!isAuthenticated) return;
@@ -164,6 +169,72 @@ function App() {
           onSubmitSuccess={fetchData} 
         />
 
+        <Modal isOpen={isUserProfileOpen} onClose={onCloseUserProfile} placement="top-center" backdrop="blur">
+          <ModalContent>
+            <ModalHeader className="flex flex-col gap-1">User Profile</ModalHeader>
+            <ModalBody>
+              {loading ? (
+                <div className="flex flex-col items-center gap-4 py-4">
+                  <Skeleton className="h-20 w-20 rounded-full" />
+                  <Skeleton className="h-6 w-48 rounded-lg" />
+                  <Skeleton className="h-4 w-32 rounded-lg" />
+                </div>
+              ) : (
+                <div className="flex flex-col gap-4 py-2">
+                  <div className="flex flex-col items-center gap-3">
+                    <Avatar showFallback size="lg" isBordered className="border-green-600 border-2 bg-white text-slate-400" />
+                    <div className="text-center">
+                      <p className="text-lg font-bold uppercase">{userProfile?.full_name || "User"}</p>
+                      <p className="text-sm text-gray-500">{userProfile?.company || "N/A"}</p>
+                    </div>
+                  </div>
+                  <Divider />
+                  <div className="grid grid-cols-1 gap-3">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 text-sm">Employee ID:</span>
+                      <span className="font-medium">{userProfile?.EmployeeId || userProfile?.id || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 text-sm">Username:</span>
+                      <span className="font-medium">{userProfile?.username || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 text-sm">Email:</span>
+                      <span className="font-medium text-sm">{userProfile?.email || "N/A"}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500 text-sm">Company Code:</span>
+                      <span className="font-medium">{userProfile?.company_code || "N/A"}</span>
+                    </div>
+                  </div>
+                  <Divider />
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm font-bold text-gray-600 mb-2">Leave Credits Summary</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Ending Balance:</span>
+                        <span className="font-medium">{userProfile?.credits?.ending_balance ?? "0"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Earned:</span>
+                        <span className="font-medium text-blue-600">{userProfile?.credits?.earned ?? "0"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Consumed:</span>
+                        <span className="font-medium text-red-600">{userProfile?.credits?.consumed ?? "0"}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-500">Available:</span>
+                        <span className="font-medium text-green-600">{userProfile?.credits?.available ?? "0"}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </ModalBody>
+          </ModalContent>
+        </Modal>
+
         <Routes>
           {/* Main Dashboard Route */}
           <Route path="/" element={
@@ -171,6 +242,7 @@ function App() {
               userProfile={userProfile}
               loading={loading}
               onOpen={onOpen}
+              onOpenUserProfile={onOpenUserProfile}
               apiData={apiData}
               fetchData={fetchData}
               leaveHistory={leaveHistory}

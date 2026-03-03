@@ -201,7 +201,12 @@ async def get_user_profile(
     if last_record:
         return {
             "id": current_user.id,
+            "username": current_user.username,
+            "email": current_user.email,
             "full_name": last_record.EmployeeName or current_user.full_name,
+            "company": last_record.CompanyName or "N/A",
+            "company_code": last_record.CompanyCode or "N/A",
+            "EmployeeId": last_record.EmployeeId or current_user.id,
             "credits": {
                 "ending_balance": int(last_record.EndingBalance or 0),
                 "earned": int(last_record.Earned or 0),
@@ -212,7 +217,12 @@ async def get_user_profile(
     
     return {
         "id": current_user.id,
+        "username": current_user.username,
+        "email": current_user.email,
         "full_name": current_user.full_name,
+        "company": "N/A",
+        "company_code": "N/A",
+        "EmployeeId": current_user.id,
         "credits": {
             "ending_balance": 0.0,
             "earned": 0.0,
